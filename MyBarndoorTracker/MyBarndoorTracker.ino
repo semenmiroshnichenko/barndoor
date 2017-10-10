@@ -19,7 +19,6 @@ long maxStepNum = STEPS_PER_UTURN;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
-float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
 
 long stepNumber = 0;
 byte Seq[8][4] = {{1,0,0,1},
@@ -128,7 +127,7 @@ void toggleLED()
 
 float getCurrentStepperDelayInUs()
 {
-  return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+  return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
 }
 
 void handler_RecalcTimer(void) 
