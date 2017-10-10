@@ -3,6 +3,7 @@
 #define MICROSECONDS_IN_SECOND 1000000
 #define TRUE 1
 #define FALSE 0
+#define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.17 //Measure this angle on the platform
 
 HardwareTimer recalcTimer(2);
 HardwareTimer stepperTimer(3);
@@ -16,7 +17,7 @@ byte run = FALSE;
 
 long maxStepNum = STEPS_PER_UTURN;
 
-float alphaInRadiant = 0;
+float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
 float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
 
@@ -162,7 +163,7 @@ void ProcessStartPressed()
 void ProcessRevertPressed()
 {
   run = FALSE;
-  alphaInRadiant = 0;
+  alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
   stepperDirection = -1;
   stepperTimer.pause();
   stepperTimer.setPeriod(2000); // in microseconds
