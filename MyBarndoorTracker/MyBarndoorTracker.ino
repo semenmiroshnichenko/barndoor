@@ -1,5 +1,5 @@
 #define DEBOUNCING_TIME 30000 //Debouncing Time in microseconds
-#define STEPS_PER_UTURN 4096
+#define STEPS_PER_UTURN 4076
 #define MICROSECONDS_IN_SECOND 1000000
 #define TRUE 1
 #define FALSE 0
