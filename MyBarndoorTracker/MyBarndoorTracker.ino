@@ -4,6 +4,11 @@
 #define TRUE 1
 #define FALSE 0
 #define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.17 //Measure this angle on the platform
+#define MAX_STEPS_NUM 100000000 //define this
+#define START_STEP_NUM 1000000
+#define NORMAL_DIRECTION 1
+#define REVERT_DIRECTION -1
+
 
 HardwareTimer recalcTimer(2);
 HardwareTimer stepperTimer(3);
@@ -12,15 +17,13 @@ HardwareTimer buttonsTimer(4);
 byte ledState = 0;
 bool blinkingOnOff = true;
 volatile unsigned long last_micros;
-int stepperDirection = 1; //1 = normal, -1 = revert
+long stepperDirection = NORMAL_DIRECTION;
 byte run = FALSE;
-
-long maxStepNum = STEPS_PER_UTURN;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
 
-long stepNumber = 0;
+long stepNumber = START_STEP_NUM;
 byte Seq[8][4] = {{1,0,0,1},
        {1,0,0,0},
        {1,1,0,0},
@@ -96,7 +99,7 @@ void DoNextStep()
   gpio_write_bit(GPIOB, 9, Seq[stepNumber % 8][3]);
   
   stepNumber += stepperDirection;
-  if(stepNumber > maxStepNum || stepNumber <= 0)
+  if(stepNumber > MAX_STEPS_NUM || stepNumber <= START_STEP_NUM)
     StopStepperTimerAndResetPins();
 }
 
@@ -152,7 +155,7 @@ void handler_StepperTimer(void)
 void ProcessStartPressed()
 {
   run = TRUE;
-  stepperDirection = 1;
+  stepperDirection = NORMAL_DIRECTION;
   stepperTimer.pause();
   stepperTimer.setPeriod(getCurrentStepperDelayInUs()); // in microseconds
   stepperTimer.refresh();
@@ -163,7 +166,7 @@ void ProcessRevertPressed()
 {
   run = FALSE;
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
-  stepperDirection = -1;
+  stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
   stepperTimer.setPeriod(2000); // in microseconds
   stepperTimer.refresh();
