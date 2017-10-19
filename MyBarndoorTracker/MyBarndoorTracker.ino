@@ -22,7 +22,8 @@ byte run = FALSE;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
-float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
+//float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
+float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
 
 long stepNumber = START_STEP_NUM;
 byte Seq[8][4] = {{1,0,0,1},
@@ -100,7 +101,7 @@ void DoNextStep()
   gpio_write_bit(GPIOB, 9, Seq[stepNumber % 8][3]);
   
   stepNumber += stepperDirection;
-  if(stepNumber > MAX_STEPS_NUM || stepNumber <= START_STEP_NUM)
+  if(stepNumber > MAX_STEPS_NUM)// || stepNumber <= START_STEP_NUM)
     StopStepperTimerAndResetPins();
 }
 
@@ -131,7 +132,10 @@ void toggleLED()
 
 float getCurrentStepperDelayInUs()
 {
-  return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+  // my tracker:
+  //return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+  //Guntrams
+  return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
 }
 
 void handler_RecalcTimer(void) 
@@ -169,7 +173,7 @@ void ProcessRevertPressed()
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
   stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
-  stepperTimer.setPeriod(2000); // in microseconds
+  stepperTimer.setPeriod(700); // in microseconds
   stepperTimer.refresh();
   stepperTimer.resume();
 }
