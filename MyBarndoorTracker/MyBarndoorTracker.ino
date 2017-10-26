@@ -3,7 +3,8 @@
 #define MICROSECONDS_IN_SECOND 1000000
 #define TRUE 1
 #define FALSE 0
-#define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.17 //Measure this angle on the platform
+#define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.17 //My
+//#define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
 #define MAX_STEPS_NUM 100000000 //define this
 #define START_STEP_NUM 1000000
 #define NORMAL_DIRECTION 1
@@ -21,7 +22,8 @@ long stepperDirection = NORMAL_DIRECTION;
 byte run = FALSE;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
-float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
+//float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
+float const deltaAlphaPerSecondInRadiant = 0.000072921;
 //float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
 float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
 
@@ -133,9 +135,10 @@ void toggleLED()
 float getCurrentStepperDelayInUs()
 {
   // my tracker:
-  //return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+  return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
   //Guntrams
-  return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
+  //return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
+  //return 700; //max speed
 }
 
 void handler_RecalcTimer(void) 
