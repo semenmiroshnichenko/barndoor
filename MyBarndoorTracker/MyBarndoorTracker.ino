@@ -3,8 +3,13 @@
 #define MICROSECONDS_IN_SECOND 1000000
 #define TRUE 1
 #define FALSE 0
-#define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.17 //My
-//#define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
+
+#ifdef __GUNTRAM
+  #define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
+#else
+  #define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.0688564893 //my
+#endif
+
 #define MAX_STEPS_NUM 100000000 //define this
 #define START_STEP_NUM 1000000
 #define NORMAL_DIRECTION 1
@@ -22,9 +27,7 @@ long stepperDirection = NORMAL_DIRECTION;
 byte run = FALSE;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
-//float const deltaAlphaPerSecondInRadiant = 0.000072722; //1 / 240 degrees
 float const deltaAlphaPerSecondInRadiant = 0.000072921;
-//float const delayPreConstant = MICROSECONDS_IN_SECOND / ((STEPS_PER_UTURN / 2) * 476);
 float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
 
 long stepNumber = START_STEP_NUM;
@@ -47,6 +50,8 @@ void setup() {
   InitRecalcTimer();
   InitStepperTimer();
   InitButtonsTimer();
+  //Serial.begin(9600);
+  //Serial.write("Init");
 }
 
 void InitButtonPins()
@@ -67,9 +72,9 @@ void InitStepperPins()
 void InitRecalcTimer()
 {
   recalcTimer.pause();
-  recalcTimer.setPeriod(MICROSECONDS_IN_SECOND); // in microseconds
+  recalcTimer.setPeriod(30 * MICROSECONDS_IN_SECOND); // in microseconds
   recalcTimer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
-  recalcTimer.setCompare(TIMER_CH1, 1);  
+  recalcTimer.setCompare(TIMER_CH2, 1);  
   recalcTimer.attachCompare1Interrupt(handler_RecalcTimer);
   recalcTimer.refresh();
   recalcTimer.resume();
@@ -79,7 +84,7 @@ void InitStepperTimer()
 {
   stepperTimer.pause();
   stepperTimer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
-  stepperTimer.setCompare(TIMER_CH1, 1); 
+  stepperTimer.setCompare(TIMER_CH3, 1); 
   stepperTimer.attachCompare1Interrupt(handler_StepperTimer);
   stepperTimer.refresh();
 }
@@ -89,7 +94,7 @@ void InitButtonsTimer()
   buttonsTimer.pause();
   buttonsTimer.setPeriod(DEBOUNCING_TIME); // in microseconds
   buttonsTimer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
-  buttonsTimer.setCompare(TIMER_CH1, 1); 
+  buttonsTimer.setCompare(TIMER_CH4, 1); 
   buttonsTimer.attachCompare1Interrupt(handler_ButtonsTimer);
   buttonsTimer.refresh();
   buttonsTimer.resume();
@@ -134,10 +139,11 @@ void toggleLED()
 
 float getCurrentStepperDelayInUs()
 {
-  // my tracker:
-  return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
-  //Guntrams
-  //return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
+  #ifdef __GUNTRAM
+    return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
+  #else
+    return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+  #endif
   //return 700; //max speed
 }
 
@@ -146,7 +152,7 @@ void handler_RecalcTimer(void)
   if(run)
   {
     toggleLED();
-    alphaInRadiant += deltaAlphaPerSecondInRadiant;
+    alphaInRadiant += deltaAlphaPerSecondInRadiant * 30;
     float stepperDelayInUs = getCurrentStepperDelayInUs();
     stepperTimer.pause();
     stepperTimer.setPeriod(stepperDelayInUs); // in microseconds
