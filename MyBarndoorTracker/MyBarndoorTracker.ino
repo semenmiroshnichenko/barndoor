@@ -3,8 +3,9 @@
 #define MICROSECONDS_IN_SECOND 1000000
 #define TRUE 1
 #define FALSE 0
+#define RECALC_EACH_N_SEC 1
 
-#ifdef __GUNTRAM
+#if defined (__GUNTRAM)
   #define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
 #else
   #define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.0688564893 //my
@@ -28,7 +29,7 @@ byte run = FALSE;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072921;
-float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
+
 
 long stepNumber = START_STEP_NUM;
 byte Seq[8][4] = {{1,0,0,1},
@@ -72,7 +73,7 @@ void InitStepperPins()
 void InitRecalcTimer()
 {
   recalcTimer.pause();
-  recalcTimer.setPeriod(30 * MICROSECONDS_IN_SECOND); // in microseconds
+  recalcTimer.setPeriod(RECALC_EACH_N_SEC * MICROSECONDS_IN_SECOND); // in microseconds
   recalcTimer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
   recalcTimer.setCompare(TIMER_CH2, 1);  
   recalcTimer.attachCompare1Interrupt(handler_RecalcTimer);
@@ -139,9 +140,10 @@ void toggleLED()
 
 float getCurrentStepperDelayInUs()
 {
-  #ifdef __GUNTRAM
+  #if defined (__GUNTRAM)
     return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
   #else
+    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
     return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
   #endif
   //return 700; //max speed
@@ -152,12 +154,9 @@ void handler_RecalcTimer(void)
   if(run)
   {
     toggleLED();
-    alphaInRadiant += deltaAlphaPerSecondInRadiant * 30;
+    alphaInRadiant += deltaAlphaPerSecondInRadiant * RECALC_EACH_N_SEC;
     float stepperDelayInUs = getCurrentStepperDelayInUs();
-    stepperTimer.pause();
     stepperTimer.setPeriod(stepperDelayInUs); // in microseconds
-    stepperTimer.refresh();
-    stepperTimer.resume();
   }
 }
 
