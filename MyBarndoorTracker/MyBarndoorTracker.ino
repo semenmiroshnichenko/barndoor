@@ -143,8 +143,8 @@ float getCurrentStepperDelayInUs()
   #if defined (__GUNTRAM)
     return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
   #else
-    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN /4) * 476);
-    return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant) - sin(alphaInRadiant / 2));
+    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (476 - 6.33));
+    return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant / 2) - sin(alphaInRadiant / 2));
   #endif
   //return 700; //max speed
 }
@@ -181,7 +181,7 @@ void ProcessRevertPressed()
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
   stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
-  stepperTimer.setPeriod(700); // in microseconds
+  stepperTimer.setPeriod(1200); // in microseconds
   stepperTimer.refresh();
   stepperTimer.resume();
 }
