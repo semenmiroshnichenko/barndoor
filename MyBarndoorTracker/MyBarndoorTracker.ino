@@ -16,6 +16,11 @@
 #define NORMAL_DIRECTION 1
 #define REVERT_DIRECTION -1
 
+// Keys and switches
+#define STOP_BUTTON PA15
+#define START_BUTTON PB5
+#define REWIND_BUTTON PB4
+#define LIMIT_SWITCH PA12
 
 HardwareTimer recalcTimer(2);
 HardwareTimer stepperTimer(3);
@@ -57,9 +62,10 @@ void setup() {
 
 void InitButtonPins()
 {
-  pinMode(PA15, INPUT_PULLUP);
-  pinMode(PB4, INPUT_PULLUP);
-  pinMode(PB5, INPUT_PULLUP);  
+  pinMode(STOP_BUTTON, INPUT_PULLUP);
+  pinMode(REWIND_BUTTON, INPUT_PULLUP);
+  pinMode(START_BUTTON, INPUT_PULLUP);  
+  pinMode(LIMIT_SWITCH, INPUT_PULLUP);
 }
 
 void InitStepperPins()
@@ -198,28 +204,41 @@ void StopStepperTimerAndResetPins()
   SetStepperPinsToLow();
 }
 
+void ProcessLimitSwitchDown()
+{
+  // stop rewind
+}
+
 void handler_ButtonsTimer()
 {
-  static unsigned int lastPA15Status = HIGH;
-  static unsigned int lastPB4Status = HIGH;
-  static unsigned int lastPB5Status = HIGH;
-  int pinPA15Status = digitalRead(PA15);
-  int pinPB4Status = digitalRead(PB4);
-  int pinPB5Status = digitalRead(PB5);
-  if(pinPA15Status != lastPA15Status && pinPA15Status == LOW)
+  static unsigned int lastSTOP_BUTTONStatus = HIGH;
+  static unsigned int lastREWIND_BUTTONStatus = HIGH;
+  static unsigned int lastSTART_BUTTONStatus = HIGH;
+  static unsigned int lastLIMIT_SWITCHStatus = HIGH;
+  int pinSTOP_BUTTONStatus = digitalRead(STOP_BUTTON);
+  int pinREWIND_BUTTONStatus = digitalRead(REWIND_BUTTON);
+  int pinSTART_BUTTONStatus = digitalRead(START_BUTTON);
+  int pinLIMIT_SWITCHStatus = digitalRead(LIMIT_SWITCH);
+  if(pinSTOP_BUTTONStatus != lastSTOP_BUTTONStatus && pinSTOP_BUTTONStatus == LOW)
   {
     ProcessStopPressed();
   }
-  if(pinPB4Status != lastPB4Status && pinPB4Status == LOW)
+  if(pinREWIND_BUTTONStatus != lastREWIND_BUTTONStatus && pinREWIND_BUTTONStatus == LOW)
   {
     ProcessRevertPressed();
   }
-  if(pinPB5Status != lastPB5Status && pinPB5Status == LOW)
+  if(pinSTART_BUTTONStatus != lastSTART_BUTTONStatus && pinSTART_BUTTONStatus == LOW)
   {
     ProcessStartPressed();
   }
-  lastPA15Status = pinPA15Status;
-  lastPB4Status = pinPB4Status;
-  lastPB5Status = pinPB5Status;
+  if(pinLIMIT_SWITCHStatus != lastLIMIT_SWITCHStatus && pinLIMIT_SWITCHStatus == LOW)
+  {
+    ProcessLimitSwitchDown();
+  }
+  
+  lastSTOP_BUTTONStatus = pinSTOP_BUTTONStatus;
+  lastREWIND_BUTTONStatus = pinREWIND_BUTTONStatus;
+  lastSTART_BUTTONStatus = pinSTART_BUTTONStatus;
+  lastLIMIT_SWITCHStatus = pinLIMIT_SWITCHStatus;
 }
 
