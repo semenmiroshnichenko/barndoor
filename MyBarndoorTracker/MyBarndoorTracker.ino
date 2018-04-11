@@ -20,7 +20,8 @@
 #define STOP_BUTTON PA15
 #define START_BUTTON PB5
 #define REWIND_BUTTON PB4
-#define LIMIT_SWITCH PA12
+#define FULLSPEED_START_BUTTON PA10
+#define LIMIT_SWITCH PA9
 
 HardwareTimer recalcTimer(2);
 HardwareTimer stepperTimer(3);
@@ -66,6 +67,7 @@ void InitButtonPins()
   pinMode(REWIND_BUTTON, INPUT_PULLUP);
   pinMode(START_BUTTON, INPUT_PULLUP);  
   pinMode(LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(FULLSPEED_START_BUTTON, INPUT_PULLUP);
 }
 
 void InitStepperPins()
@@ -152,7 +154,7 @@ float getCurrentStepperDelayInUs()
     float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (476 - 6.33));
     return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant / 2) - sin(alphaInRadiant / 2));
   #endif
-  //return 700; //max speed
+  //return 1200; //max speed
 }
 
 void handler_RecalcTimer(void) 
@@ -184,6 +186,9 @@ void ProcessStartPressed()
 void ProcessRevertPressed()
 {
   run = FALSE;
+  if(digitalRead(LIMIT_SWITCH) == HIGH)
+    return;
+   
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
   stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
@@ -198,15 +203,28 @@ void ProcessStopPressed()
   StopStepperTimerAndResetPins();
 }
 
+void ProcessStartFullSpeedPressed()
+{
+  run = FALSE;
+  stepperDirection = NORMAL_DIRECTION;
+  stepperTimer.pause();
+  stepperTimer.setPeriod(1200); // in microseconds
+  stepperTimer.refresh();
+  stepperTimer.resume();
+}
+
 void StopStepperTimerAndResetPins()
 {
   stepperTimer.pause();
   SetStepperPinsToLow();
 }
 
-void ProcessLimitSwitchDown()
+void ProcessLimitSwitchClosed()
 {
   // stop rewind
+  run = FALSE;
+  StopStepperTimerAndResetPins();
+  
 }
 
 void handler_ButtonsTimer()
@@ -214,11 +232,15 @@ void handler_ButtonsTimer()
   static unsigned int lastSTOP_BUTTONStatus = HIGH;
   static unsigned int lastREWIND_BUTTONStatus = HIGH;
   static unsigned int lastSTART_BUTTONStatus = HIGH;
-  static unsigned int lastLIMIT_SWITCHStatus = HIGH;
+  static unsigned int lastLIMIT_SWITCHStatus = LOW; //normally closed switch
+  static unsigned int lastFULLSPEED_START_BUTTONStatus = HIGH;
+  
   int pinSTOP_BUTTONStatus = digitalRead(STOP_BUTTON);
   int pinREWIND_BUTTONStatus = digitalRead(REWIND_BUTTON);
   int pinSTART_BUTTONStatus = digitalRead(START_BUTTON);
   int pinLIMIT_SWITCHStatus = digitalRead(LIMIT_SWITCH);
+  int pinFULLSPEED_START_BUTTONStatus = digitalRead(FULLSPEED_START_BUTTON);
+  
   if(pinSTOP_BUTTONStatus != lastSTOP_BUTTONStatus && pinSTOP_BUTTONStatus == LOW)
   {
     ProcessStopPressed();
@@ -231,14 +253,19 @@ void handler_ButtonsTimer()
   {
     ProcessStartPressed();
   }
-  if(pinLIMIT_SWITCHStatus != lastLIMIT_SWITCHStatus && pinLIMIT_SWITCHStatus == LOW)
+  if(pinLIMIT_SWITCHStatus != lastLIMIT_SWITCHStatus && pinLIMIT_SWITCHStatus == HIGH)
   {
-    ProcessLimitSwitchDown();
+    ProcessLimitSwitchClosed();
+  }
+  if(pinFULLSPEED_START_BUTTONStatus != lastFULLSPEED_START_BUTTONStatus && pinFULLSPEED_START_BUTTONStatus == LOW)
+  {
+    ProcessStartFullSpeedPressed();
   }
   
   lastSTOP_BUTTONStatus = pinSTOP_BUTTONStatus;
   lastREWIND_BUTTONStatus = pinREWIND_BUTTONStatus;
   lastSTART_BUTTONStatus = pinSTART_BUTTONStatus;
   lastLIMIT_SWITCHStatus = pinLIMIT_SWITCHStatus;
+  lastFULLSPEED_START_BUTTONStatus = pinFULLSPEED_START_BUTTONStatus;
 }
 
