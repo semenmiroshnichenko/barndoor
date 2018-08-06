@@ -117,7 +117,7 @@ void DoNextStep()
   gpio_write_bit(GPIOB, 9, Seq[stepNumber % 8][3]);
   
   stepNumber += stepperDirection;
-  if(stepNumber > MAX_STEPS_NUM)// || stepNumber <= START_STEP_NUM)
+  if(stepNumber > MAX_STEPS_NUM)
     StopStepperTimerAndResetPins();
 }
 
