@@ -1,9 +1,17 @@
 #define DEBOUNCING_TIME 30000 //Debouncing Time in microseconds
 #define STEPS_PER_UTURN 4076
 #define MICROSECONDS_IN_SECOND 1000000
+#define ARCSECONDS_IN_RADIANT 206264.8
 #define TRUE 1
 #define FALSE 0
 #define RECALC_EACH_N_SEC 1
+
+//correction data:
+#define LINEAR_ERROR_SLOPE_ARCSEC_PER_SECOND 0.159828870656 //positive means too fast
+#define PERIODIC_ERROR_ANGULAR_FREQUENCY_W 0.0542207201
+#define PERIODIC_ERROR_PHASE_P 0.0299584338
+#define PERIODIC_ERROR_AMPLITUDE_A 18.1483706428
+
 
 #if defined (__GUNTRAM)
   #define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
@@ -32,9 +40,12 @@ bool blinkingOnOff = true;
 volatile unsigned long last_micros;
 long stepperDirection = NORMAL_DIRECTION;
 byte run = FALSE;
+int secondsFromStart = 0;
 
 float alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
 float const deltaAlphaPerSecondInRadiant = 0.000072921;
+float const deltaAlphaPerSecondInArcSeconds = 15.0410500749;
+
 
 
 long stepNumber = START_STEP_NUM;
@@ -151,8 +162,16 @@ float getCurrentStepperDelayInUs()
   #if defined (__GUNTRAM)
     return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(deltaAlphaPerSecondInRadiant * 60));
   #else
-    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (476 - 6.33));
-    return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiant / 2) - sin(alphaInRadiant / 2));
+    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (476));
+    float const deltaAlphaPerSecondInArcSecondsCorrected = 
+                deltaAlphaPerSecondInArcSeconds 
+                - LINEAR_ERROR_SLOPE_ARCSEC_PER_SECOND
+                // first derivate of periodic error tracing given by linearizeIt.py
+                - PERIODIC_ERROR_AMPLITUDE_A * PERIODIC_ERROR_ANGULAR_FREQUENCY_W 
+                    * cos(PERIODIC_ERROR_ANGULAR_FREQUENCY_W * secondsFromStart + PERIODIC_ERROR_PHASE_P);
+    float const deltaAlphaPerSecondInRadiantCorrected = deltaAlphaPerSecondInArcSecondsCorrected / ARCSECONDS_IN_RADIANT;
+    
+    return delayPreConstant / (sin(alphaInRadiant / 2 + deltaAlphaPerSecondInRadiantCorrected / 2) - sin(alphaInRadiant / 2));
   #endif
   //return 1200; //max speed
 }
@@ -163,6 +182,7 @@ void handler_RecalcTimer(void)
   {
     toggleLED();
     alphaInRadiant += deltaAlphaPerSecondInRadiant * RECALC_EACH_N_SEC;
+    secondsFromStart += RECALC_EACH_N_SEC;
     float stepperDelayInUs = getCurrentStepperDelayInUs();
     stepperTimer.setPeriod(stepperDelayInUs); // in microseconds
   }
@@ -190,6 +210,7 @@ void ProcessRevertPressed()
     return;
    
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
+  secondsFromStart = 0;
   stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
   stepperTimer.setPeriod(1200); // in microseconds
