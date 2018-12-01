@@ -12,6 +12,7 @@
 #define PERIODIC_ERROR_PHASE_P 0.0299584338
 #define PERIODIC_ERROR_AMPLITUDE_A 18.1483706428
 
+#define __GUNTRAM 1
 
 #if defined (__GUNTRAM)
   #define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
@@ -126,7 +127,7 @@ void DoNextStep()
   gpio_write_bit(GPIOB, 7, Seq[stepNumber % 8][1]);
   gpio_write_bit(GPIOB, 8, Seq[stepNumber % 8][2]);
   gpio_write_bit(GPIOB, 9, Seq[stepNumber % 8][3]);
-  
+   
   stepNumber += stepperDirection;
   if(stepNumber > MAX_STEPS_NUM)
     StopStepperTimerAndResetPins();
@@ -206,14 +207,22 @@ void ProcessStartPressed()
 void ProcessRevertPressed()
 {
   run = FALSE;
+  #if defined (__GUNTRAM)
+  #else
+  
   if(digitalRead(LIMIT_SWITCH) == HIGH)
     return;
-   
+  #endif 
   alphaInRadiant = ALPHA_AT_THE_START_POSITION_IN_RADIANT;
   secondsFromStart = 0;
+  stepNumber = START_STEP_NUM;
   stepperDirection = REVERT_DIRECTION;
   stepperTimer.pause();
-  stepperTimer.setPeriod(1200); // in microseconds
+  #if defined (__GUNTRAM)
+    stepperTimer.setPeriod(1500); // in microseconds
+  #else
+    stepperTimer.setPeriod(700); // in microseconds
+  #endif
   stepperTimer.refresh();
   stepperTimer.resume();
 }
@@ -229,7 +238,7 @@ void ProcessStartFullSpeedPressed()
   run = FALSE;
   stepperDirection = NORMAL_DIRECTION;
   stepperTimer.pause();
-  stepperTimer.setPeriod(1200); // in microseconds
+  stepperTimer.setPeriod(700); // in microseconds
   stepperTimer.refresh();
   stepperTimer.resume();
 }
