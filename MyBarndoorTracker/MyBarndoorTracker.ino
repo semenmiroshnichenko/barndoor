@@ -7,17 +7,17 @@
 #define RECALC_EACH_N_SEC 1
 
 //correction data:
-#define LINEAR_ERROR_SLOPE_ARCSEC_PER_SECOND 0.159828870656 //positive means too fast
-#define PERIODIC_ERROR_ANGULAR_FREQUENCY_W 0.0542207201
-#define PERIODIC_ERROR_PHASE_P 0.0299584338
-#define PERIODIC_ERROR_AMPLITUDE_A 18.1483706428
+#define LINEAR_ERROR_SLOPE_ARCSEC_PER_SECOND -0.0104727072891 //positive means too fast, zero out for adjustment
+#define PERIODIC_ERROR_ANGULAR_FREQUENCY_W 0.0572923669373784
+#define PERIODIC_ERROR_PHASE_P 1.149113202464716
+#define PERIODIC_ERROR_AMPLITUDE_A -11.012412410829343 //zero out for adjustment
 
 //#define __GUNTRAM 1
 
 #if defined (__GUNTRAM)
   #define ALPHA_AT_THE_START_POSITION_IN_RADIANT -0.055885802 //Guntam
 #else
-  #define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.0688564893 //my
+  #define ALPHA_AT_THE_START_POSITION_IN_RADIANT 0.017855245 //my
 #endif
 
 #define MAX_STEPS_NUM 100000000 //define this
@@ -214,7 +214,7 @@ float getCurrentStepperDelayInUs()
   #if defined (__GUNTRAM)
     return 60000000 / (3276.8 * sqrt(pow((286 * tan(alphaInRadiant)), 2) + pow(286, 2)) * tan(getCurrentDeltaAlphaPerSecondInRadiant() * 60));
   #else
-    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (476));
+    float const delayPreConstant = (float)MICROSECONDS_IN_SECOND / (float)((STEPS_PER_UTURN / 2) * (252*2));
     float const deltaAlphaPerSecondInArcSecondsStellarCorrected = 
                 getCurrentDeltaAlphaPerSecondInArcSeconds() 
                 - LINEAR_ERROR_SLOPE_ARCSEC_PER_SECOND
